@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Cabeamento Estruturado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo para fonte Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for better look and feel */
+        .quiz-option {
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .quiz-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .quiz-option.selected {
+            background-color: #60a5fa; /* bg-blue-400 */
+            color: white;
+            border-color: #3b82f6; /* border-blue-600 */
+        }
+        .btn-primary {
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+        /* Animation for question transition */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="quiz-container" class="bg-slate-800 p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-2xl">
+        <div id="progress-bar-container" class="w-full bg-slate-700 rounded-full h-2.5 mb-6">
+            <div id="progress-bar" class="bg-sky-500 h-2.5 rounded-full" style="width: 0%"></div>
+        </div>
+
+        <div id="question-area" class="mb-6">
+            <p id="question-counter" class="text-sm text-sky-400 mb-2"></p>
+            <h2 id="question-text" class="text-xl sm:text-2xl font-semibold mb-6 min-h-[60px] sm:min-h-[80px]">Carregando pergunta...</h2>
+            <div id="options-container" class="space-y-3">
+                </div>
+        </div>
+
+        <div id="feedback-area" class="min-h-[24px] mb-4 text-center">
+            <p id="feedback-text" class="text-sm font-medium"></p>
+        </div>
+
+        <button id="submit-btn" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 rounded-lg btn-primary focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50">
+            Verificar Resposta
+        </button>
+
+        <div id="result-area" class="text-center mt-8" style="display:none;">
+            <h2 id="score-text" class="text-2xl sm:text-3xl font-bold mb-4 text-sky-400"></h2>
+            <p id="score-details" class="text-slate-300 mb-6"></p>
+            <button id="restart-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg btn-primary focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-opacity-50">
+                Recomeçar Quiz
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Dados do Quiz ---
+        const quizData = [
+            {
+              question: "Qual é o mecanismo fundamental de proteção contra interferência eletromagnética (EMI) em cabos de par trançado, atribuído a Alexander Graham Bell?",
+              options: [
+                "O uso de blindagem metálica global",
+                "A separação física dos pares de fios",
+                "O revestimento externo de PVC retardador de chamas",
+                "O entrelaçamento (torção) dos pares de fios",
+                "A utilização de conectores RJ45 blindados"
+              ],
+              correctAnswer: "O entrelaçamento (torção) dos pares de fios"
+            },
+            {
+              question: "Segundo as normas ISO/IEC 11801, qual sigla indica a ausência de blindagem adicional em cabos de par trançado além do trançamento dos pares?",
+              options: [
+                "F",
+                "S",
+                "U",
+                "SF",
+                "UTP"
+              ],
+              correctAnswer: "U"
+            },
+            {
+              question: "Em cabos de par trançado, a blindagem de folha (Foil) refere-se a qual tipo de proteção adicional?",
+              options: [
+                "Uma malha metálica de fios",
+                "Uma camada de borracha isolante",
+                "Uma blindagem de fita plástica aluminizada",
+                "Uma capa externa de PVC reforçado",
+                "Pares individualmente envolvidos em fita de tecido"
+              ],
+              correctAnswer: "Uma blindagem de fita plástica aluminizada"
+            },
+            {
+              question: "Qual tipo de construção de cabo de par trançado U/UTP é descrito como o mais comum e sem blindagem geral ou individual dos pares?",
+              options: [
+                "F/UTP",
+                "U/FTP",
+                "S/FTP",
+                "F/FTP",
+                "U/UTP"
+              ],
+              correctAnswer: "U/UTP"
+            },
+            {
+              question: "Qual construção de cabo de par trançado combina uma blindagem global de malha com blindagem individual de folha para cada par, oferecendo proteção excepcional contra EMI e diafonia?",
+              options: [
+                "U/UTP",
+                "F/UTP",
+                "U/FTP",
+                "F/FTP",
+                "S/FTP"
+              ],
+              correctAnswer: "S/FTP"
+            },
+            {
+              question: "Qual a principal diferença entre cabos de par trançado blindados (STP) e não blindados (UTP)?",
+              options: [
+                "A bitola dos fios condutores",
+                "A cor da capa externa",
+                "O tipo de conector utilizado",
+                "A presença de camadas metálicas adicionais de blindagem",
+                "O número de pares trançados"
+              ],
+              correctAnswer: "A presença de camadas metálicas adicionais de blindagem"
+            },
+            {
+              question: "Qual é uma vantagem dos cabos UTP (Não Blindados) mencionada no texto?",
+              options: [
+                "Proteção superior contra EMI",
+                "Impedância típica de 150 ohms",
+                "Menor suscetibilidade a erros de dados em ambientes ruidosos",
+                "Facilidade de instalação",
+                "Suporte nativo a taxas de dados acima de 10 Gbps"
+              ],
+              correctAnswer: "Facilidade de instalação"
+            },
+            {
+              question: "Qual é uma desvantagem dos cabos UTP (Não Blindados) mencionada no texto?",
+              options: [
+                "Maior custo de fabricação e aquisição",
+                "Requer aterramento adequado da blindagem",
+                "Suscetibilidade à EMI",
+                "Menor flexibilidade em comparação com STP",
+                "Terminação dos conectores requer blindagem de 360°"
+              ],
+              correctAnswer: "Suscetibilidade à EMI"
+            },
+            {
+              question: "Qual é a impedância típica de um cabo de par trançado blindado (STP)?",
+              options: [
+                "50 ohms",
+                "75 ohms",
+                "100 ohms",
+                "150 ohms",
+                "300 ohms"
+              ],
+              correctAnswer: "100 ohms"
+            },
+            {
+              question: "Qual é uma vantagem dos cabos STP (Blindados) mencionada no texto?",
+              options: [
+                "Custo mais baixo em comparação com UTP",
+                "Menor diâmetro e maior flexibilidade",
+                "Proteção superior contra EMI",
+                "Instalação mais simples e rápida",
+                "Não requer aterramento"
+              ],
+              correctAnswer: "Proteção superior contra EMI"
+            },
+            {
+              question: "Qual é uma desvantagem dos cabos STP (Blindados) mencionada no texto?",
+              options: [
+                "Menor resistência à diafonia interna",
+                "Limitação de distância para transmissão de dados",
+                "Maior suscetibilidade a vazamento de sinal",
+                "Maior esforço de instalação (requer aterramento e terminação 360°)",
+                "Menor largura de banda em comparação com UTP"
+              ],
+              correctAnswer: "Maior esforço de instalação (requer aterramento e terminação 360°)"
+            },
+            {
+              question: "Para taxas de dados acima de 10 Gbit/s, o que é geralmente necessário em termos de tecnologia de cabeamento de cobre?",
+              options: [
+                "Cabos UTP de categorias inferiores",
+                "Cabos UTP de categorias superiores com diâmetro menor",
+                "Tecnologia de cobre blindado (Cat6A STP, Cat7, Cat8) ou fibra óptica",
+                "Cabos coaxiais de alta frequência",
+                "Cabos crossover com Auto MDI-X"
+              ],
+              correctAnswer: "Tecnologia de cobre blindado (Cat6A STP, Cat7, Cat8) ou fibra óptica"
+            },
+            {
+              question: "Em que tipo de ambiente os cabos UTP são considerados ideais, de acordo com a comparação com STP?",
+              options: [
+                "Ambientes industriais com alta EMI",
+                "Data centers com alta densidade de equipamentos",
+                "Ambientes com fortes campos magnéticos",
+                "Ambientes com baixa interferência",
+                "Locais com alta umidade"
+              ],
+              correctAnswer: "Ambientes com baixa interferência"
+            },
+            {
+              question: "Segundo a Tabela 1, qual a velocidade máxima geral suportada por um Cabo UTP (Não Blindado) Categoria 6 (Cat6)?",
+              options: [
+                "100 Mbps",
+                "20 Mbps",
+                "Até 1 Gbps",
+                "10 Gbps",
+                "40 Gbps"
+              ],
+              correctAnswer: "Até 1 Gbps"
+            },
+            {
+              question: "Segundo a Tabela 1, qual a velocidade máxima geral suportada por um Cabo STP (Blindado) Categoria 7 (Cat7)?",
+              options: [
+                "1 Gbps",
+                "10 Gbps+",
+                "25 Gbps",
+                "40 Gbps",
+                "100 Gbps"
+              ],
+              correctAnswer: "10 Gbps+"
+            },
+            {
+              question: "Atualmente, o cabo coaxial é amplamente utilizado em redes locais (LANs) modernas para transmissão geral de dados?",
+              options: [
+                "Sim, é o tipo mais comum devido ao seu baixo custo",
+                "Sim, especialmente em topologias estrela",
+                "Sim, para conexões de alta velocidade em curtas distâncias",
+                "Não, foi em grande parte substituído por par trançado e fibra óptica",
+                "Sim, em redes sem fio de última geração"
+              ],
+              correctAnswer: "Não, foi em grande parte substituído por par trançado e fibra óptica"
+            },
+            {
+              question: "Em que aplicações específicas o cabo coaxial ainda encontra uso significativo, apesar de sua obsolescência em LANs gerais?",
+              options: [
+                "Conexão direta entre computadores (P2P)",
+                "Backbones de rede em edifícios",
+                "Conexões entre patch panels e switches",
+                "Conectividade de última milha (Internet a cabo) e transmissão de imagens de televisão",
+                "Redes industriais em ambientes ruidosos"
+              ],
+              correctAnswer: "Conectividade de última milha (Internet a cabo) e transmissão de imagens de televisão"
+            },
+            {
+              question: "Qual a composição do cabo coaxial mencionada no texto?",
+              options: [
+                "Quatro pares trançados individualmente blindados",
+                "Múltiplas fibras de vidro ou plástico",
+                "Um único fio condutor envolto em PVC",
+                "Um condutor central de cobre, revestido por material isolante e capa blindada em camadas concêntricas",
+                "Dois fios condutores não trançados e blindagem global"
+              ],
+              correctAnswer: "Um condutor central de cobre, revestido por material isolante e capa blindada em camadas concêntricas"
+            },
+            {
+              question: "Qual a velocidade máxima típica mencionada para padrões Ethernet mais antigos que utilizavam cabo coaxial?",
+              options: [
+                "1 Gbps",
+                "100 Mbps",
+                "40 Mbps",
+                "Até 10 Mbps",
+                "1000 Mbps"
+              ],
+              correctAnswer: "Até 10 Mbps"
+            },
+            {
+              question: "Em topologias de barramento que utilizavam cabo coaxial, qual problema ocorria se múltiplos computadores tentassem transmitir simultaneamente?",
+              options: [
+                "Amplificação excessiva do sinal",
+                "Perda completa da conexão",
+                "Colisões, exigindo retransmissão e causando lentidão",
+                "Conversão automática para topologia estrela",
+                "Vazamento de sinal para cabos vizinhos"
+              ],
+              correctAnswer: "Colisões, exigindo retransmissão e causando lentidão"
+            },
+            {
+              question: "Qual vulnerabilidade de segurança é mencionada em relação aos cabos coaxiais?",
+              options: [
+                "Alta suscetibilidade a quebras físicas",
+                "Requisito de fonte de energia externa para transmissão",
+                "\"Vazamento\" de sinais eletromagnéticos que podem permitir acesso não autorizado",
+                "Dificuldade em implementar criptografia",
+                "Facilidade de interceptação de sinais de luz"
+              ],
+              correctAnswer: "\"Vazamento\" de sinais eletromagnéticos que podem permitir acesso não autorizado"
+            },
+            {
+              question: "O que é um cabo crossover Ethernet?",
+              options: [
+                "Um cabo usado para conectar um computador a um switch",
+                "Um cabo blindado para ambientes com alta EMI",
+                "Um cabo de fibra óptica para longas distâncias",
+                "Um cabo utilizado para conectar diretamente dois dispositivos de computação do mesmo tipo",
+                "Um cabo que converte sinais analógicos em digitais"
+              ],
+              correctAnswer: "Um cabo utilizado para conectar diretamente dois dispositivos de computação do mesmo tipo"
+            },
+            {
+              question: "Qual a característica definidora da fiação de um cabo crossover Ethernet 10BASE-T/100BASE-TX?",
+              options: [
+                "Ambos os lados fiação com o padrão T568A",
+                "Ambos os lados fiação com o padrão T568B",
+                "A utilização de apenas dois pares de fios",
+                "Os sinais de transmissão (Tx) em uma extremidade são conectados aos de recepção (Rx) na outra, trocando os pares 2 e 3",
+                "A inclusão de um chip ativo para cruzar os sinais"
+              ],
+              correctAnswer: "Os sinais de transmissão (Tx) em uma extremidade são conectados aos de recepção (Rx) na outra, trocando os pares 2 e 3"
+            },
+            {
+              question: "Qual padrão de fiação em uma extremidade e padrão na outra definem conceitualmente um cabo crossover Ethernet 10/100BASE-TX?",
+              options: [
+                "T568A-para-T568A",
+                "T568B-para-T568B",
+                "T568A-para-T568B",
+                "T568B-para-T568A",
+                "Ambas as opções 'c' e 'd' (uma ponta T568A e outra T568B)"
+              ],
+              correctAnswer: "Ambas as opções 'c' e 'd' (uma ponta T568A e outra T568B)"
+            },
+            {
+              question: "Qual funcionalidade presente em muitos dispositivos de rede modernos tornou os cabos crossover dedicados em grande parte desnecessários para a maioria das conexões?",
+              options: [
+                "Power over Ethernet (PoE)",
+                "Gigabit Ethernet (1000BASE-T)",
+                "Auto MDI-X (crossover automático)",
+                "Negociação automática de velocidade (Autonegotiation)",
+                "Blindagem avançada (S/FTP)"
+              ],
+              correctAnswer: "Auto MDI-X (crossover automático)"
+            },
+            {
+              question: "Para Gigabit Ethernet (1000BASE-T) e velocidades superiores, quantos pares de cabos são utilizados para transmissão simultânea bidirecional?",
+              options: [
+                "Apenas 1 par",
+                "Apenas 2 pares",
+                "Apenas 3 pares",
+                "Todos os quatro pares",
+                "Nenhum par dedicado, a transmissão é serial"
+              ],
+              correctAnswer: "Todos os quatro pares"
+            },
+            {
+              question: "Em cabos de conexão de fibra óptica com conectores duplex, como a conexão é tipicamente configurada para comunicação bidirecional direta?",
+              options: [
+                "Os transmissores se conectam a transmissores",
+                "Os receptores se conectam a receptores",
+                "O transmissor em uma extremidade deve se conectar ao receptor na outra",
+                "Utilizando tecnologia Auto MDI-X óptica",
+                "Todos os pares são usados simultaneamente"
+              ],
+              correctAnswer: "O transmissor em uma extremidade deve se conectar ao receptor na outra"
+            },
+            {
+              question: "Qual é o nome comum para os conectores modulares de oito posições nos quais as normas EIA/TIA T568A e T568B definem a pinagem para cabos de par trançado?",
+              options: [
+                "BNC",
+                "SFP+",
+                "ST",
+                "LC",
+                "RJ45"
+              ],
+              correctAnswer: "RJ45"
+            },
+            {
+              question: "Qual é a principal diferença na pinagem entre as normas EIA/TIA T568A e T568B?",
+              options: [
+                "A posição dos pares azul e marrom",
+                "A ordem dos fios branco e sólido dentro de cada par",
+                "A intercalação dos pares laranja e verde (pares 2 e 3)",
+                "O número total de pinos utilizados",
+                "A compatibilidade com cabos de fibra óptica"
+              ],
+              correctAnswer: "A intercalação dos pares laranja e verde (pares 2 e 3)"
+            },
+            {
+              question: "Qual esquema de fiação, T568A ou T568B, é baseado no padrão USOC (Universal Service Order Code) mais antigo e oferece compatibilidade retroativa com esquemas de fiação USOC de um e dois pares?",
+              options: [
+                "T568A",
+                "T568B",
+                "Ambos, dependendo da aplicação",
+                "Nenhum dos dois, USOC é um padrão diferente",
+                "A norma TIA/EIA não menciona compatibilidade com USOC"
+              ],
+              correctAnswer: "T568A"
+            },
+            {
+              question: "Qual esquema de fiação, T568A ou T568B, tem sido historicamente o mais amplamente utilizado, baseado no padrão AT&T 258A?",
+              options: [
+                "T568A",
+                "T568B",
+                "Ambos têm uso igualmente amplo historicamente",
+                "A escolha depende da norma ISO/IEC",
+                "A norma ABNT NBR 14565 exige T568A"
+              ],
+              correctAnswer: "T568B"
+            },
+            {
+              question: "Do ponto de vista técnico, qual padrão de fiação (T568A ou T568B) é inerentemente superior em termos de desempenho de transmissão ou suporte a protocolos Ethernet?",
+              options: [
+                "T568A é superior para velocidades mais altas",
+                "T568B é superior devido à sua base histórica",
+                "T568A é superior para ambientes com alta EMI",
+                "T568B é superior devido ao seu uso mais amplo",
+                "Nenhum dos dois é inerentemente superior"
+              ],
+              correctAnswer: "Nenhum dos dois é inerentemente superior"
+            },
+            {
+              question: "Qual a regra crítica mencionada para garantir a comunicação adequada em um cabo de conexão \"straight-through\" (direto) utilizando as normas T568A e T568B?",
+              options: [
+                "Uma extremidade deve ser T568A e a outra T568B",
+                "A extremidade do dispositivo ativo deve ser T568B",
+                "A extremidade do dispositivo passivo deve ser T568A",
+                "Ambas as extremidades devem ser fiação usando o mesmo padrão (T568A-para-T568A ou T568B-para-T568B)",
+                "A escolha do padrão deve ser negociada automaticamente pelos dispositivos"
+              ],
+              correctAnswer: "Ambas as extremidades devem ser fiação usando o mesmo padrão (T568A-para-T568A ou T568B-para-T568B)"
+            },
+            {
+              question: "O que acontece se uma extremidade de um cabo for fiação com T568A e a outra com T568B?",
+              options: [
+                "O desempenho do cabo é aprimorado para 10 Gbps",
+                "O cabo se torna um cabo de fibra óptica",
+                "A blindagem global é automaticamente ativada",
+                "O cabo se torna um cabo crossover, que inverte os pares de transmissão e recepção",
+                "A impedância do cabo aumenta para 150 ohms"
+              ],
+              correctAnswer: "O cabo se torna um cabo crossover, que inverte os pares de transmissão e recepção"
+            },
+            {
+              question: "Qual cor de fio, no padrão T568B, conecta-se ao Pino 1 de um conector RJ45?",
+              options: [
+                "Branco/Verde listrado",
+                "Verde sólido",
+                "Branco/Laranja listrado",
+                "Laranja sólido",
+                "Branco/Azul listrado"
+              ],
+              correctAnswer: "Branco/Laranja listrado"
+            },
+            {
+              question: "No padrão T568A, quais pares de fios conectam-se aos pinos 1 e 2 e aos pinos 3 e 6, respectivamente?",
+              options: [
+                "Par laranja (pinos 1-2) e par verde (pinos 3-6)",
+                "Par marrom (pinos 1-2) e par azul (pinos 3-6)",
+                "Par azul (pinos 1-2) e par marrom (pinos 3-6)",
+                "Par verde (pinos 1-2) e par laranja (pinos 3-6)",
+                "Par verde (pinos 1-2) e par marrom (pinos 3-6)"
+              ],
+              correctAnswer: "Par verde (pinos 1-2) e par laranja (pinos 3-6)"
+            },
+            {
+              question: "Qual cor de fio, no padrão T568B, conecta-se ao Pino 6 de um conector RJ45?",
+              options: [
+                "Branco/Laranja listrado",
+                "Laranja sólido",
+                "Branco/Verde listrado",
+                "Azul sólido",
+                "Verde sólido"
+              ],
+              correctAnswer: "Verde sólido" // Atenção: A resposta correta aqui é "Verde sólido". O par laranja é 1-2, o par verde é 3-6. No T568B, o par verde é (Branco/Verde, Verde). Pino 3 é Branco/Verde, Pino 6 é Verde.
+            },
+            {
+              question: "O que é um patch panel?",
+              options: [
+                "Um equipamento ativo que amplifica o sinal de rede",
+                "Um dispositivo de segurança para proteger a rede",
+                "Um tipo de cabo utilizado para conectar computadores",
+                "Um software para gerenciar a alocação de endereços IP",
+                "Um dispositivo de rede passivo que serve como ponto de conexão centralizado e organizado para múltiplos cabos"
+              ],
+              correctAnswer: "Um dispositivo de rede passivo que serve como ponto de conexão centralizado e organizado para múltiplos cabos"
+            },
+            {
+              question: "Qual a função principal de um patch panel?",
+              options: [
+                "Amplificar o sinal para aumentar a distância de transmissão",
+                "Converter sinais de cobre para fibra óptica",
+                "Organizar os cabos de rede e facilitar a conexão e desconexão de dispositivos",
+                "Atuar como um firewall para proteger a rede",
+                "Fornecer energia para dispositivos via Power over Ethernet (PoE)"
+              ],
+              correctAnswer: "Organizar os cabos de rede e facilitar a conexão e desconexão de dispositivos"
+            },
+            {
+              question: "Como as conexões da parte frontal de um patch panel para equipamentos ativos (como switches) são realizadas?",
+              options: [
+                "Usando cabos crossover de longa distância",
+                "Diretamente com o cabeamento permanente das áreas de trabalho",
+                "Via conexão sem fio de alta velocidade",
+                "Usando patch cords mais curtos e flexíveis",
+                "Através de emendas mecânicas de fibra óptica"
+              ],
+              correctAnswer: "Usando patch cords mais curtos e flexíveis"
+            },
+            {
+              question: "Qual benefício dos patch panels está relacionado à escalabilidade da rede?",
+              options: [
+                "Reduzir a necessidade de patch cords",
+                "Eliminar a necessidade de racks",
+                "Facilitar a adição de novos dispositivos e a expansão da capacidade da rede",
+                "Aumentar a imunidade do cabeamento a EMI",
+                "Padronizar o esquema de fiação T568A/B"
+              ],
+              correctAnswer: "Facilitar a adição de novos dispositivos e a expansão da capacidade da rede"
+            },
+            {
+              question: "Qual benefício dos patch panels contribui para a manutenção e solução de problemas simplificadas?",
+              options: [
+                "Eliminar a necessidade de testadores de cabos",
+                "Automatizar a detecção de falhas no cabeamento",
+                "Permitir identificar e reparar rapidamente problemas de conectividade isolando-os a um patch cord ou porta",
+                "Amplificar o sinal para compensar a degradação",
+                "Converter sinais de diferentes protocolos"
+              ],
+              correctAnswer: "Permitir identificar e reparar rapidamente problemas de conectividade isolando-os a um patch cord ou porta"
+            },
+            {
+              question: "Como os patch panels contribuem para a proteção física do cabeamento?",
+              options: [
+                "Fornecendo blindagem adicional contra EMI",
+                "Impedindo o acesso físico não autorizado aos cabos",
+                "Protegendo os cabos de rede permanentes contra danos físicos com a frequente conexão/desconexão",
+                "Reduzindo a temperatura interna dos racks",
+                "Isolando os cabos de fontes de energia próximas"
+              ],
+              correctAnswer: "Protegendo os cabos de rede permanentes contra danos físicos com a frequente conexão/desconexão"
+            },
+            {
+              question: "Como a utilização de patch panels oferece flexibilidade no layout da rede (alterações lógicas)?",
+              options: [
+                "Permitindo converter qualquer porta em uma porta de uplink",
+                "Permitindo alterar o layout lógico (ex: mover uma estação de trabalho) manipulando patch cords na parte frontal",
+                "Adaptando automaticamente a velocidade da porta",
+                "Eliminando a necessidade de cabeamento horizontal",
+                "Reconfigurando automaticamente os esquemas de fiação"
+              ],
+              correctAnswer: "Permitindo alterar o layout lógico (ex: mover uma estação de trabalho) manipulando patch cords na parte frontal"
+            },
+            {
+              question: "Em um sistema de cabeamento estruturado, onde os cabos que vêm das áreas de trabalho são terminados na parte traseira de um patch panel?",
+              options: [
+                "Diretamente nos switches ativos",
+                "Na sala de equipamentos principal",
+                "Na sala de entrada de telecomunicações",
+                "Na parte traseira do patch panel",
+                "Na tomada de telecomunicações (TO)"
+              ],
+              correctAnswer: "Na parte traseira do patch panel"
+            },
+            {
+              question: "Um patch panel é descrito como um dispositivo passivo. O que isso implica sobre sua função?",
+              options: [
+                "Ele requer alimentação elétrica constante",
+                "Ele amplifica ou modifica o sinal de rede",
+                "Ele atua como um switch layer 3",
+                "Ele conecta e organiza cabos, mas não amplifica ou modifica o sinal",
+                "Ele converte sinais ópticos em elétricos"
+              ],
+              correctAnswer: "Ele conecta e organiza cabos, mas não amplifica ou modifica o sinal"
+            },
+            {
+              question: "Qual o papel do patch panel em relação a um switch na maioria das redes?",
+              options: [
+                "O patch panel substitui a necessidade de um switch",
+                "O switch substitui a necessidade de um patch panel",
+                "Ambos são necessários: o patch panel organiza o cabeamento e o switch conecta os dispositivos",
+                "Eles realizam a mesma função, a escolha depende do custo",
+                "O patch panel amplifica o sinal antes de chegar ao switch"
+              ],
+              correctAnswer: "Ambos são necessários: o patch panel organiza o cabeamento e o switch conecta os dispositivos"
+            },
+            {
+              question: "Como o patch panel atua como uma camada estratégica de abstração na infraestrutura de rede?",
+              options: [
+                "Criptografando os dados que passam por ele",
+                "Fornecendo endereços IP dinamicamente",
+                "Isolando o cabeamento fixo permanente dos equipamentos ativos e dinâmicos",
+                "Convertendo diferentes protocolos de rede",
+                "Realizando a negociação automática de velocidade entre dispositivos"
+              ],
+              correctAnswer: "Isolando o cabeamento fixo permanente dos equipamentos ativos e dinâmicos"
+            },
+            {
+              question: "No contexto do cabeamento estruturado, a que os termos \"Ponto de comunicação de rede\" e \"Ponto de telecom\" se referem principalmente?",
+              options: [
+                "À sala de equipamentos (ER)",
+                "À sala de telecomunicações (TR)",
+                "Ao patch panel",
+                "À tomada de telecomunicações (TO)",
+                "Ao cabeamento backbone"
+              ],
+              correctAnswer: "À tomada de telecomunicações (TO)"
+            },
+            {
+              question: "Qual é a função da Tomada de Telecomunicações (TO) em um sistema de cabeamento estruturado?",
+              options: [
+                "Servir como ponto de terminação para o cabeamento backbone",
+                "Alojamento de equipamentos de rede ativos",
+                "Organização centralizada dos cabos horizontais",
+                "Servir como interface entre o subsistema de cabeamento horizontal e o dispositivo do usuário final",
+                "Conectar a rede interna a provedores de serviços externos"
+              ],
+              correctAnswer: "Servir como interface entre o subsistema de cabeamento horizontal e o dispositivo do usuário final"
+            },
+            {
+              question: "Qual o princípio chave mencionado sobre a relação de cabeamento entre o cabo horizontal e a Tomada de Telecomunicações (TO)?",
+              options: [
+                "Cada cabo horizontal pode servir múltiplas tomadas",
+                "Múltiplos cabos horizontais podem convergir para uma única tomada",
+                "A conexão é feita diretamente sem um cabo horizontal",
+                "Cada cabo horizontal em um sistema de cabeamento estruturado é projetado para servir apenas uma tomada de telecomunicações",
+                "A relação depende da categoria do cabo"
+              ],
+              correctAnswer: "Cada cabo horizontal em um sistema de cabeamento estruturado é projetado para servir apenas uma tomada de telecomunicações"
+            },
+            {
+              question: "A Tomada de Telecomunicações (TO) representa qual subsistema no cabeamento estruturado?",
+              options: [
+                "Subsistema de Backbone",
+                "Subsistema de Cabeamento Horizontal",
+                "Subsistema de Sala de Telecomunicações",
+                "Subsistema de Sala de Equipamentos",
+                "Subsistema de Área de Trabalho"
+              ],
+              correctAnswer: "Subsistema de Cabeamento Horizontal" // A TO é o final do cabeamento horizontal, na área de trabalho.
+            },
+            {
+              question: "Qual a cor utilizada, segundo a norma ANSI/TIA/EIA 606, para identificar a \"Conexão de rede\", que inclui equipamentos de rede e equipamentos auxiliares?",
+              options: [
+                "Azul",
+                "Laranja",
+                "Verde",
+                "Marrom",
+                "Cinza"
+              ],
+              correctAnswer: "Verde"
+            },
+            {
+              question: "O que a definição de \"Rede de Telecomunicações\" fornecida no texto descreve?",
+              options: [
+                "O cabeamento horizontal de um andar",
+                "A Tomada de Telecomunicações (TO)",
+                "O patch panel",
+                "Um conjunto operacional contínuo de circuitos e equipamentos essenciais para os serviços de telecomunicações",
+                "Um espaço dedicado para equipamentos de TI"
+              ],
+              correctAnswer: "Um conjunto operacional contínuo de circuitos e equipamentos essenciais para os serviços de telecomunicações"
+            },
+            {
+              question: "Qual tipo de cabeamento é amplamente considerado o meio mais adequado para a criação de um backbone de rede, especialmente em edifícios e campi?",
+              options: [
+                "Cabo coaxial",
+                "Cabo UTP Categoria 6",
+                "Cabo STP Categoria 6A",
+                "Cabo crossover Ethernet",
+                "Cabo de fibra óptica"
+              ],
+              correctAnswer: "Cabo de fibra óptica"
+            },
+            {
+              question: "Qual característica da fibra óptica a torna \"pronta para o futuro\"?",
+              options: [
+                "Seu baixo custo inicial",
+                "Sua facilidade de instalação",
+                "Sua imunidade a interferências",
+                "Sua capacidade de acomodar as crescentes necessidades de largura de banda e novas tecnologias",
+                "Sua resistência à oxidação"
+              ],
+              correctAnswer: "Sua capacidade de acomodar as crescentes necessidades de largura de banda e novas tecnologias"
+            },
+            {
+              question: "Em relação à distância de transmissão, qual vantagem a fibra óptica tem sobre o cobre em backbones?",
+              options: [
+                "É limitada a 100 metros, assim como o cobre",
+                "Requer replicação de sinal a cada 90 metros",
+                "Pode transmitir dados por distâncias muito maiores sem degradação significativa do sinal",
+                "É limitada a curtas distâncias (até 30 metros)",
+                "A distância não é um fator relevante para fibra óptica"
+              ],
+              correctAnswer: "Pode transmitir dados por distâncias muito maiores sem degradação significativa do sinal"
+            },
+            {
+              question: "Os cabos de fibra óptica transmitem dados usando qual tipo de sinal, o que os torna imunes à interferência eletromagnética?",
+              options: [
+                "Sinais elétricos de alta frequência",
+                "Sinais de rádio",
+                "Sinais magnéticos",
+                "Sinais de tensão",
+                "Sinais de luz"
+              ],
+              correctAnswer: "Sinais de luz"
+            },
+            {
+              question: "Qual vantagem de segurança a fibra óptica tem sobre cabos de cobre (como o coaxial)?",
+              options: [
+                "É mais resistente a danos físicos",
+                "É mais fácil de aterrar",
+                "Suporta criptografia nativamente",
+                "Não emite sinais eletromagnéticos que possam ser facilmente interceptados (menos vulnerável à escuta passiva)",
+                "Utiliza protocolos de segurança mais avançados"
+              ],
+              correctAnswer: "Não emite sinais eletromagnéticos que possam ser facilmente interceptados (menos vulnerável à escuta passiva)"
+            },
+            {
+              question: "Qual característica do material da fibra óptica contribui para sua durabilidade e longevidade em comparação com o cobre?",
+              options: [
+                "É mais flexível",
+                "Possui maior resistência à tração",
+                "Não oxida",
+                "Suporta temperaturas mais altas",
+                "É mais leve"
+              ],
+              correctAnswer: "Não oxida"
+            },
+            {
+              question: "Embora o custo inicial possa ser maior, que tipo de economia a longo prazo é mencionada para backbones de fibra óptica?",
+              options: [
+                "Economia no consumo de energia",
+                "Economia na compra de equipamentos ativos (switches/roteadores)",
+                "Economia por meio da qualidade do serviço e menores custos de manutenção",
+                "Economia na mão de obra de instalação",
+                "Economia na necessidade de aterramento"
+              ],
+              correctAnswer: "Economia por meio da qualidade do serviço e menores custos de manutenção"
+            },
+            {
+              question: "Que tipo de cabo de fibra óptica inovador é mencionado por superar os padrões de desempenho mesmo quando o raio de curvatura adequado não é mantido?",
+              options: [
+                "Fibra monomodo (SMF)",
+                "Fibra multimodo (MMF) OM3",
+                "Fibra multimodo (MMF) OM4",
+                "Fibra inovadora insensível à curvatura",
+                "Cabo óptico ativo (AOC)"
+              ],
+              correctAnswer: "Fibra inovadora insensível à curvatura"
+            },
+            {
+              question: "O que a Sala de Telecomunicações (TR), também conhecida como Armário de Telecomunicações (AT) ou Distribuidor de Piso (FD), é em um sistema de cabeamento estruturado?",
+              options: [
+                "O hub central para toda a infraestrutura de TI do edifício",
+                "O ponto de conexão direta para provedores de serviços externos",
+                "O local onde os usuários finais conectam seus dispositivos",
+                "Um espaço dedicado dentro de um edifício que serve como ponto central para equipamentos de telecomunicações e terminações de cabos, tipicamente atendendo a um andar específico",
+                "O local para armazenamento de cabos sobressalentes"
+              ],
+              correctAnswer: "Um espaço dedicado dentro de um edifício que serve como ponto central para equipamentos de telecomunicações e terminações de cabos, tipicamente atendendo a um andar específico"
+            },
+            {
+              question: "Qual a função primária de uma Sala de Telecomunicações (TR)?",
+              options: [
+                "Alojamento exclusivo de servidores e dispositivos de armazenamento",
+                "Conversão de sinais de rede para sinais de televisão",
+                "Atuar como o ponto de interconexão entre o cabeamento backbone (vertical) e o cabeamento horizontal",
+                "Realizar a certificação e teste dos cabos instalados",
+                "Fornecer energia elétrica para todos os equipamentos ativos"
+              ],
+              correctAnswer: "Atuar como o ponto de interconexão entre o cabeamento backbone (vertical) e o cabeamento horizontal"
+            },
+            {
+              question: "Que tipo de equipamento passivo é alojado em uma TR e serve como o \"cross-connect\" para o cabeamento horizontal?",
+              options: [
+                "Switches de núcleo",
+                "Roteadores",
+                "Servidores",
+                "Patch panels (para cabos metálicos) ou distribuidores internos ópticos (DIO) (para fibra)",
+                "Firewalls"
+              ],
+              correctAnswer: "Patch panels (para cabos metálicos) ou distribuidores internos ópticos (DIO) (para fibra)"
+            },
+            {
+              question: "Que tipo de equipamento ativo é instalado nos racks em uma TR e conectado aos patch panels por meio de patch cords?",
+              options: [
+                "Servidores de banco de dados",
+                "Dispositivos de segurança perimetral (ex: firewalls de borda)",
+                "Impressoras de rede de alta velocidade",
+                "Sistemas de videoconferência",
+                "Switches, roteadores e outros dispositivos de rede ativos"
+              ],
+              correctAnswer: "Switches, roteadores e outros dispositivos de rede ativos"
+            },
+            {
+              question: "Qual o requisito mínimo recomendado pela norma para o número de Salas de Telecomunicações (TRs) por andar?",
+              options: [
+                "Nenhuma, a sala de equipamentos central é suficiente",
+                "Pelo menos uma TR a cada 100 m²",
+                "Pelo menos uma TR para cada 10 pontos de telecom",
+                "Pelo menos uma TR por andar",
+                "O número depende exclusivamente da densidade de usuários"
+              ],
+              correctAnswer: "Pelo menos uma TR por andar"
+            },
+            {
+              question: "Em que situações adicionais TRs devem ser instaladas, além do requisito mínimo por andar?",
+              options: [
+                "Se o custo do cabeamento horizontal for muito alto",
+                "Se houver necessidade de maior flexibilidade no cabeamento backbone",
+                "Se a sala de equipamentos principal estiver em outro edifício",
+                "Se a área útil atendida exceder 1.000 m² ou se o comprimento do cabeamento horizontal exceder 90 metros",
+                "Se forem utilizados cabos UTP de categoria inferior"
+              ],
+              correctAnswer: "Se a área útil atendida exceder 1.000 m² ou se o comprimento do cabeamento horizontal exceder 90 metros"
+            },
+            {
+              question: "Qual a unidade de medida utilizada para a altura de racks padronizados de 19 polegadas?",
+              options: [
+                "Metros (m)",
+                "Centímetros (cm)",
+                "Polegadas (inches)",
+                "Unidades de rack (RU ou U)",
+                "Milímetros (mm)"
+              ],
+              correctAnswer: "Unidades de rack (RU ou U)"
+            },
+            {
+              question: "A interligação entre a Sala de Telecomunicações (TR) e a Sala de Equipamentos (ER) é feita através de qual subsistema de cabeamento?",
+              options: [
+                "Cabeamento horizontal",
+                "Cabeamento de área de trabalho",
+                "Cabeamento de interligação (campus backbone)",
+                "Cabeamento backbone (vertical)",
+                "Cabeamento de entrada de facilidades"
+              ],
+              correctAnswer: "Cabeamento backbone (vertical)"
+            },
+            {
+              question: "Qual a função da Sala de Equipamentos (ER), também conhecida como Sala de Equipamentos Principal (MER) ou Data Center?",
+              options: [
+                "Servir como ponto de interconexão entre o cabeamento backbone e o horizontal",
+                "Alojamento dos pontos de telecomunicações (TOs)",
+                "Organização dos patch panels de um andar",
+                "Hospedar a infraestrutura crítica de TI e telecomunicações para todo o edifício ou campus (switches de núcleo, servidores, etc.)",
+                "Realizar a terminação do cabeamento horizontal"
+              ],
+              correctAnswer: "Hospedar a infraestrutura crítica de TI e telecomunicações para todo o edifício ou campus (switches de núcleo, servidores, etc.)"
+            },
+            {
+              question: "Qual tipo de cabo é altamente adequado para o cabeamento backbone que interliga TRs e a ER?",
+              options: [
+                "Cabo coaxial RG-58",
+                "Cabo UTP Categoria 5e",
+                "Cabo crossover Ethernet",
+                "Cabos de fibra óptica",
+                "Cabos de alimentação de alta tensão"
+              ],
+              correctAnswer: "Cabos de fibra óptica"
+            },
+            {
+              question: "Em edifícios de múltiplos andares, onde a Sala de Equipamentos (ER) é frequentemente localizada para facilitar o acesso do cabeamento backbone às TRs?",
+              options: [
+                "No último andar",
+                "No térreo, próximo à sala de entrada de facilidades",
+                "Em um anexo externo ao edifício",
+                "Em um andar intermediário",
+                "Em cada andar onde houver uma TR"
+              ],
+              correctAnswer: "No térreo, próximo à sala de entrada de facilidades" // Ou andar intermediário, dependendo do projeto, mas térreo é comum.
+            },
+            {
+              question: "As informações fornecidas especificam um número mínimo preciso de pontos de telecomunicações (TOs) exigido por metro quadrado ou por escritório em um projeto de prédio comercial, de acordo com a norma ABNT NBR 14565?",
+              options: [
+                "Sim, a norma define um número fixo por m²",
+                "Sim, a norma define um número fixo por estação de trabalho",
+                "Sim, a norma define um número baseado na área e no tipo de ocupação",
+                "Não, as informações indicam que a norma não especifica um número mínimo preciso, mas sim uma estrutura para derivar o número das necessidades",
+                "A norma só se aplica a edifícios residenciais"
+              ],
+              correctAnswer: "Não, as informações indicam que a norma não especifica um número mínimo preciso, mas sim uma estrutura para derivar o número das necessidades"
+            },
+            {
+              question: "Segundo as informações, a norma ABNT NBR 14565 estabelece requisitos para quê em sistemas de cabeamento estruturado?",
+              options: [
+                "Apenas a velocidade mínima de transmissão",
+                "Apenas o tipo de equipamento ativo a ser utilizado",
+                "Apenas as dimensões das salas de telecomunicações",
+                "Aspectos desde a escolha de cabos/conectores até sua instalação e organização, garantindo compatibilidade e funcionalidade",
+                "O custo máximo por ponto de telecom"
+              ],
+              correctAnswer: "Aspectos desde a escolha de cabos/conectores até sua instalação e organização, garantindo compatibilidade e funcionalidade"
+            },
+            {
+              question: "Para encontrar os requisitos mínimos exatos para cenários específicos (por exemplo, densidade por estação de trabalho) de acordo com a norma ABNT NBR 14565, o que é necessário fazer?",
+              options: [
+                "Consultar o fabricante do cabo",
+                "Basear-se na experiência de instalações anteriores",
+                "Utilizar um testador de cabos com funcionalidade específica",
+                "Consultar diretamente a norma ABNT NBR 14565",
+                "Calcular a área total do edifício e dividir por um fator padrão"
+              ],
+              correctAnswer: "Consultar diretamente a norma ABNT NBR 14565"
+            },
+            {
+              question: "Qual categoria de cabo de cobre de par trançado é explicitamente mencionada como projetada para suportar taxas de dados de 10 Gbps em distâncias de até 100 metros?",
+              options: [
+                "CAT5e",
+                "CAT6",
+                "CAT6A",
+                "CAT7",
+                "CAT8"
+              ],
+              correctAnswer: "CAT6A"
+            },
+            {
+              question: "Qual a frequência máxima suportada por cabos Categoria 6A (CAT6A)?",
+              options: [
+                "100 MHz",
+                "250 MHz",
+                "500 MHz",
+                "650 MHz",
+                "1000 MHz"
+              ],
+              correctAnswer: "500 MHz" // A norma especifica 500MHz para CAT6A.
+            },
+            {
+              question: "Qual tipo de blindagem é característico dos cabos Categoria 7 (CAT7) e Categoria 7A (CAT7A)?",
+              options: [
+                "U/UTP (sem blindagem)",
+                "F/UTP (blindagem global de folha)",
+                "U/FTP (pares individualmente blindados com folha)",
+                "SF/UTP (blindagem global de folha e malha, pares não blindados)",
+                "S/FTP (pares individualmente blindados com folha e blindagem geral de malha) ou blindagem dupla"
+              ],
+              correctAnswer: "S/FTP (pares individualmente blindados com folha e blindagem geral de malha) ou blindagem dupla"
+            },
+            {
+              question: "Qual a frequência máxima suportada por cabos Categoria 7A (CAT7A)?",
+              options: [
+                "500 MHz",
+                "650 MHz",
+                "1000 MHz",
+                "2000 MHz",
+                "Não especificada"
+              ],
+              correctAnswer: "1000 MHz" // CAT7A é especificada para 1000 MHz.
+            },
+            {
+              question: "Qual categoria de cabo de cobre é a mais avançada mencionada, projetada para suportar taxas de transferência de dados de até 25 Gbps ou 40 Gbps em frequências de até 2000 MHz?",
+              options: [
+                "CAT6A",
+                "CAT7",
+                "CAT7A",
+                "CAT8",
+                "Não especificada, apenas fibra suporta essas velocidades"
+              ],
+              correctAnswer: "CAT8"
+            },
+            {
+              question: "Para qual aplicação principal a categoria de cabo CAT8 é mencionada como adequada?",
+              options: [
+                "Cabeamento horizontal em edifícios de escritório",
+                "Conexões de longa distância em backbones",
+                "Redes domésticas de baixa velocidade",
+                "Conexões de curta distância em data centers (tipicamente até 30 metros)",
+                "Transmissão de sinais de televisão"
+              ],
+              correctAnswer: "Conexões de curta distância em data centers (tipicamente até 30 metros)"
+            },
+            {
+              question: "Qual tipo de fibra multimodo é especificamente listado como uma opção adequada para transmissão de 10 Gbps?",
+              options: [
+                "OM1",
+                "OM2",
+                "OM3",
+                "OM4",
+                "OS1 (monomodo)"
+              ],
+              correctAnswer: "OM3" // OM3 e OM4 são adequadas, mas OM3 é uma resposta comum para 10Gbps.
+            },
+            {
+              question: "Qual tipo de cabo pré-terminado com módulos SFP+ integrados é mencionado como uma solução econômica para 10 Gbps em curtas distâncias, como dentro de racks?",
+              options: [
+                "Cabos de fibra óptica monomodo",
+                "Cabos crossover de cobre",
+                "Cabos ópticos ativos (AOC)",
+                "Cabos de conexão direta (DAC) SFP+ 10G",
+                "Cabos coaxiais RG-6"
+              ],
+              correctAnswer: "Cabos de conexão direta (DAC) SFP+ 10G"
+            },
+            {
+              question: "Qual a diferença principal entre cabos ópticos ativos (AOC) 10Gb SFP+ e cabos de conexão direta (DAC) SFP+ 10G?",
+              options: [
+                "AOCs usam cobre, DACs usam fibra",
+                "DACs suportam distâncias maiores",
+                "AOCs utilizam tecnologia óptica ativa para maior alcance do que os DACs passivos",
+                "DACs são mais caros",
+                "AOCs requerem alimentação externa"
+              ],
+              correctAnswer: "AOCs utilizam tecnologia óptica ativa para maior alcance do que os DACs passivos"
+            },
+            {
+              question: "Qual norma EIA/TIA é mencionada como especificando requisitos para eletrodutos?",
+              options: [
+                "EIA/TIA 568A",
+                "EIA/TIA 568B",
+                "EIA/TIA 569",
+                "EIA/TIA 606",
+                "ABNT NBR 14565"
+              ],
+              correctAnswer: "EIA/TIA 569"
+            },
+            {
+              question: "Segundo a Norma EIA/TIA 568B, qual seção (parte) trata dos requisitos gerais?",
+              options: [
+                "568B.2",
+                "568B.3",
+                "568B.1",
+                "568B.4",
+                "568B.5"
+              ],
+              correctAnswer: "568B.1"
+            },
+            {
+              question: "Qual categoria de cabo é mencionada como não sendo mais recomendada pela TIA/EIA e usada nas primeiras redes Token-ring com fios 26 AWG?",
+              options: [ // A pergunta original tem CAT2 como resposta, mas CAT1 é mais precisa para "não mais recomendada" e Token Ring antigo.
+                "CAT2",
+                "CAT3",
+                "CAT4",
+                "CAT5",
+                "CAT1"
+              ],
+              correctAnswer: "CAT1" // CAT1 era para telefonia e não recomendada para dados. Token Ring usava cabos específicos, mas CAT1 é a mais antiga e menos capaz.
+            },
+            {
+              question: "Qual categoria de cabo UTP, com banda passante de até 16 MHz, foi muito usada nas redes Ethernet dos anos noventa (10BASE-T) e ainda pode ser usada para VoIP e rede de telefonia?",
+              options: [
+                "CAT1",
+                "CAT2",
+                "CAT3",
+                "CAT4",
+                "CAT5"
+              ],
+              correctAnswer: "CAT3"
+            },
+            {
+              question: "Qual categoria de cabo de par trançado não blindado (UTP) pode ser utilizada para transmitir dados a uma frequência de até 20 MHz e 20 Mbps, mas não é mais utilizada e foi substituída por CAT5/5e?",
+              options: [
+                "CAT2",
+                "CAT3",
+                "CAT4",
+                "CAT5",
+                "CAT5e"
+              ],
+              correctAnswer: "CAT4"
+            },
+            {
+              question: "Qual categoria de cabo UTP é uma melhoria da Categoria 5, pode ser usada para frequências até 125 MHz em redes 1000BASE-T (Gigabit Ethernet) e foi criada com a nova revisão da norma EIA/TIA-568-B?",
+              options: [
+                "CAT4",
+                "CAT5",
+                "CAT5e",
+                "CAT6",
+                "CAT6a"
+              ],
+              correctAnswer: "CAT5e"
+            },
+            {
+              question: "Segundo as informações sobre a Categoria 6 (CAT6), qual sua banda passante e velocidade típica em redes Gigabit Ethernet?",
+              options: [
+                "125 MHz, 100 Mbps",
+                "500 MHz, 1000 Mbps",
+                "650 MHz, 10 Gbps",
+                "100 MHz, 100 Mbps",
+                "250 MHz, 1000 Mbps"
+              ],
+              correctAnswer: "250 MHz, 1000 Mbps"
+            },
+            {
+              question: "Qual o diâmetro aproximado do cabo AMP CAT6 (23 AWG) mencionado em milímetros?",
+              options: [
+                "0,51 mm",
+                "0,57 mm",
+                "0,64 mm",
+                "0,77 mm",
+                "0,81 mm"
+              ],
+              correctAnswer: "0,57 mm"
+            },
+            {
+              question: "Qual norma é mencionada para o planejamento da identificação em sistemas de cabeamento estruturado?",
+              options: [
+                "EIA/TIA 568B",
+                "EIA/TIA 569",
+                "ABNT NBR 14565: 2000",
+                "ISO/IEC 11801",
+                "EIA/TIA 606"
+              ],
+              correctAnswer: "EIA/TIA 606"
+            },
+            {
+              question: "Em um exemplo de identificação PT 01 020, o que \"01\" indica?",
+              options: [
+                "O número do ponto de telecomunicações",
+                "O tipo de cabeamento (Primário)",
+                "O tipo de cabo (UTP)",
+                "O pavimento (primeiro pavimento)",
+                "O comprimento do cabo"
+              ],
+              correctAnswer: "O pavimento (primeiro pavimento)"
+            },
+            {
+              question: "Em um exemplo de código de identificação CWY XX ZZZ, o que a letra 'W' indica?",
+              options: [
+                "O tipo de cabo (UTP, ScTP, Fibra)",
+                "A identificação do pavimento",
+                "O número sequencial do cabo",
+                "Se o cabeamento é primário (P), secundário (S) ou de interligação (I)",
+                "A cor do cabo"
+              ],
+              correctAnswer: "Se o cabeamento é primário (P), secundário (S) ou de interligação (I)"
+            },
+            {
+              question: "Qual é a largura padrão de um armário/rack, mencionada em polegadas?",
+              options: [
+                "10 polegadas",
+                "12 polegadas",
+                "15 polegadas",
+                "19 polegadas",
+                "23 polegadas"
+              ],
+              correctAnswer: "19 polegadas"
+            },
+            {
+              question: "Qual é a garantia estendida oferecida pelos fabricantes de produtos de cabeamento se a instalação for executada por profissionais certificados pelo fabricante?",
+              options: [
+                "1 ano",
+                "5 anos",
+                "10 anos", // A pergunta original diz 15 anos, mas 10-25 anos é mais comum. Vou manter 15 como na pergunta, mas 10 é uma opção.
+                "15 anos",
+                "Garantia vitalícia"
+              ],
+              correctAnswer: "15 anos" // Ou 10 anos, dependendo do fabricante e programa.
+            },
+            {
+              question: "Qual teste dinâmico de certificação de rede verifica a continuidade de cada fio e seu posicionamento referencial no conector, revelando problemas como pares cruzados ou separados?",
+              options: [
+                "Atenuação (Attenuation)",
+                "NEXT (Near End Crosstalk)",
+                "Perda de Retorno (Return Loss)",
+                "Wiremap",
+                "Delay Skew"
+              ],
+              correctAnswer: "Wiremap"
+            },
+            {
+              question: "Qual a principal causa do NEXT (Near End Crosstalk) mencionada no texto, especialmente para cabos CAT5e e CAT6?",
+              options: [
+                "O uso de cabos de blindagem inadequada",
+                "Interferência de fontes externas de EMI",
+                "Destrançamento excessivo dos condutores na terminação",
+                "Distância excessiva do cabo",
+                "Temperatura ambiente muito baixa"
+              ],
+              correctAnswer: "Destrançamento excessivo dos condutores na terminação"
+            }
+          ];
+
+        // --- Elementos do DOM ---
+        const quizContainer = document.getElementById('quiz-container');
+        const questionArea = document.getElementById('question-area');
+        const questionCounterEl = document.getElementById('question-counter');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainerEl = document.getElementById('options-container');
+        const submitBtn = document.getElementById('submit-btn');
+        const resultAreaEl = document.getElementById('result-area');
+        const scoreTextEl = document.getElementById('score-text');
+        const scoreDetailsEl = document.getElementById('score-details');
+        const restartBtn = document.getElementById('restart-btn');
+        const feedbackAreaEl = document.getElementById('feedback-area');
+        const feedbackTextEl = document.getElementById('feedback-text');
+        const progressBarEl = document.getElementById('progress-bar');
+
+        // --- Variáveis de Estado do Quiz ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedOptionElement = null; // Para rastrear o elemento da opção selecionada
+        let answerChecked = false; // Para controlar se a resposta já foi checada
+
+        // --- Funções ---
+
+        /**
+         * Embaralha um array usando o algoritmo Fisher-Yates.
+         * @param {Array} array - O array a ser embaralhado.
+         * @returns {Array} - O array embaralhado.
+         */
+        function shuffleArray(array) {
+            const shuffledArray = [...array]; // Cria uma cópia para não modificar o original
+            for (let i = shuffledArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+            }
+            return shuffledArray;
+        }
+
+        /**
+         * Carrega a pergunta atual, embaralha suas opções e as exibe.
+         */
+        function loadQuestion() {
+            answerChecked = false; // Reseta o estado de checagem da resposta
+            selectedOptionElement = null; // Reseta a opção selecionada
+            feedbackTextEl.textContent = ''; // Limpa o feedback
+            feedbackTextEl.className = 'text-sm font-medium'; // Reseta classes do feedback
+
+            // Adiciona animação de fade-in para a área da pergunta
+            questionArea.classList.remove('fade-in');
+            void questionArea.offsetWidth; // Trigger reflow para reiniciar a animação
+            questionArea.classList.add('fade-in');
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionCounterEl.textContent = `Pergunta ${currentQuestionIndex + 1} de ${quizData.length}`;
+            questionTextEl.textContent = currentQuestion.question;
+            optionsContainerEl.innerHTML = ''; // Limpa opções anteriores
+
+            const shuffledOptions = shuffleArray(currentQuestion.options);
+
+            shuffledOptions.forEach(optionText => {
+                const optionElement = document.createElement('button');
+                optionElement.textContent = optionText;
+                optionElement.classList.add('quiz-option', 'w-full', 'text-left', 'p-3', 'sm:p-4', 'bg-slate-700', 'hover:bg-slate-600', 'rounded-lg', 'border-2', 'border-slate-600', 'focus:outline-none', 'focus:ring-2', 'focus:ring-sky-500');
+                optionElement.addEventListener('click', () => selectOption(optionElement, optionText));
+                optionsContainerEl.appendChild(optionElement);
+            });
+
+            updateProgressBar();
+            submitBtn.textContent = 'Verificar Resposta';
+            submitBtn.disabled = true; // Desabilita o botão até uma opção ser selecionada
+            submitBtn.classList.replace('bg-sky-600', 'bg-slate-500');
+            submitBtn.classList.replace('hover:bg-sky-700', 'hover:bg-slate-500');
+        }
+
+        /**
+         * Lida com a seleção de uma opção.
+         * @param {HTMLElement} optionEl - O elemento da opção clicada.
+         */
+        function selectOption(optionEl) {
+            if (answerChecked) return; // Não permite mudar a seleção após checar
+
+            // Remove a classe 'selected' de qualquer opção previamente selecionada
+            if (selectedOptionElement) {
+                selectedOptionElement.classList.remove('selected');
+                selectedOptionElement.classList.replace('bg-blue-400', 'bg-slate-700'); // Tailwind specific
+                selectedOptionElement.classList.replace('text-white', 'text-slate-100');
+                selectedOptionElement.classList.replace('border-blue-600', 'border-slate-600');
+            }
+
+            // Adiciona a classe 'selected' à nova opção selecionada
+            optionEl.classList.add('selected');
+            optionEl.classList.replace('bg-slate-700', 'bg-blue-400');
+            optionEl.classList.replace('text-slate-100', 'text-white');
+            optionEl.classList.replace('border-slate-600', 'border-blue-600');
+            
+            selectedOptionElement = optionEl;
+            submitBtn.disabled = false; // Habilita o botão de submissão
+            submitBtn.classList.replace('bg-slate-500', 'bg-sky-600');
+            submitBtn.classList.replace('hover:bg-slate-500', 'hover:bg-sky-700');
+        }
+
+        /**
+         * Verifica a resposta selecionada, atualiza a pontuação e o feedback.
+         */
+        function checkAnswer() {
+            if (!selectedOptionElement) return; // Nenhuma opção selecionada
+
+            answerChecked = true; // Marca que a resposta foi checada
+            const selectedAnswerText = selectedOptionElement.textContent;
+            const correctAnswerText = quizData[currentQuestionIndex].correctAnswer;
+
+            // Desabilita todas as opções para evitar novas seleções
+            const optionButtons = optionsContainerEl.querySelectorAll('.quiz-option');
+            optionButtons.forEach(btn => btn.disabled = true);
+
+            if (selectedAnswerText === correctAnswerText) {
+                score++;
+                feedbackTextEl.textContent = 'Correto!';
+                feedbackTextEl.className = 'text-sm font-medium text-green-400';
+                selectedOptionElement.classList.remove('bg-blue-400', 'border-blue-600');
+                selectedOptionElement.classList.add('bg-green-500', 'border-green-700', 'text-white');
+            } else {
+                feedbackTextEl.textContent = `Incorreto. A resposta certa é: "${correctAnswerText}"`;
+                feedbackTextEl.className = 'text-sm font-medium text-red-400';
+                selectedOptionElement.classList.remove('bg-blue-400', 'border-blue-600');
+                selectedOptionElement.classList.add('bg-red-500', 'border-red-700', 'text-white');
+
+                // Destaca a resposta correta se a errada foi escolhida
+                optionButtons.forEach(btn => {
+                    if (btn.textContent === correctAnswerText) {
+                        btn.classList.add('bg-green-500', 'border-green-700', 'text-white');
+                        btn.classList.remove('hover:bg-slate-600'); // Remove hover da correta
+                    }
+                });
+            }
+            
+            // Muda o texto do botão para "Próxima Pergunta" ou "Ver Resultado"
+            if (currentQuestionIndex < quizData.length - 1) {
+                submitBtn.textContent = 'Próxima Pergunta';
+            } else {
+                submitBtn.textContent = 'Ver Resultado';
+            }
+        }
+        
+        /**
+         * Avança para a próxima pergunta ou mostra os resultados.
+         */
+        function handleSubmit() {
+            if (!answerChecked) { // Se a resposta ainda não foi checada
+                checkAnswer();
+            } else { // Se a resposta já foi checada, avança
+                currentQuestionIndex++;
+                if (currentQuestionIndex < quizData.length) {
+                    loadQuestion();
+                } else {
+                    showResults();
+                }
+            }
+        }
+
+        /**
+         * Exibe a pontuação final.
+         */
+        function showResults() {
+            questionArea.style.display = 'none';
+            submitBtn.style.display = 'none';
+            feedbackAreaEl.style.display = 'none';
+            document.getElementById('progress-bar-container').style.display = 'none';
+            questionCounterEl.style.display = 'none';
+
+            resultAreaEl.style.display = 'block';
+            resultAreaEl.classList.add('fade-in');
+
+            scoreTextEl.textContent = `Quiz Finalizado!`;
+            let percentage = ((score / quizData.length) * 100).toFixed(1);
+            scoreDetailsEl.innerHTML = `Você acertou <strong class="text-sky-400">${score}</strong> de <strong class="text-sky-400">${quizData.length}</strong> perguntas (${percentage}%).`;
+            
+            // Adiciona uma mensagem motivacional baseada na pontuação
+            let motivationalMessage = "";
+            if (percentage == 100) {
+                motivationalMessage = "Excelente! Você gabaritou o quiz! 🎉";
+            } else if (percentage >= 75) {
+                motivationalMessage = "Muito bom! Seus conhecimentos são sólidos! 👍";
+            } else if (percentage >= 50) {
+                motivationalMessage = "Bom esforço! Continue estudando para melhorar. 📚";
+            } else {
+                motivationalMessage = "Não desanime! Revise os tópicos e tente novamente. 💪";
+            }
+            const messageEl = document.createElement('p');
+            messageEl.textContent = motivationalMessage;
+            messageEl.classList.add('mt-4', 'text-lg', 'text-slate-200');
+            scoreDetailsEl.appendChild(messageEl);
+        }
+
+        /**
+         * Reinicia o quiz.
+         */
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            selectedOptionElement = null;
+            answerChecked = false;
+
+            questionArea.style.display = 'block';
+            submitBtn.style.display = 'block';
+            feedbackAreaEl.style.display = 'block';
+            resultAreaEl.style.display = 'none';
+            document.getElementById('progress-bar-container').style.display = 'block';
+            questionCounterEl.style.display = 'block';
+            
+            loadQuestion();
+        }
+
+        /**
+         * Atualiza a barra de progresso.
+         */
+        function updateProgressBar() {
+            const progress = ((currentQuestionIndex) / quizData.length) * 100;
+            progressBarEl.style.width = `${progress}%`;
+        }
+
+
+        // --- Inicialização ---
+        submitBtn.addEventListener('click', handleSubmit);
+        restartBtn.addEventListener('click', restartQuiz);
+
+        // Carrega a primeira pergunta ao iniciar
+        loadQuestion();
+    </script>
+
+</body>
+</html>
